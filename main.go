@@ -282,7 +282,7 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 			}
 
 			// symline widget should only work in the left axis
-			if xPos > (float64(canvasRS.OriginX)+float64(canvasRS.Width))/2 {
+			if xPos > (float64(canvasRS.OriginX) + float64(canvasRS.Width/2)) {
 				return
 			}
 			ggCtx.SetHexColor("#999")
@@ -305,6 +305,54 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 			}
 
 			lastSymmLineX = 0
+		}
+
+		// send the frame to glfw window
+		windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
+		g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
+		window.SwapBuffers()
+
+		// save the frame
+		currentWindowFrame = ggCtx.Image()
+
+	case LeftSymmWidget:
+		canvasRS := objCoords[CanvasWidget]
+		ggCtx := gg.NewContextForImage(currentWindowFrame)
+
+		if lastSymmLineX == 0 {
+			return
+		}
+		// clear last symmLine
+		ggCtx.SetHexColor("#fff")
+		ggCtx.SetLineWidth(2)
+		ggCtx.MoveTo(lastSymmLineX, float64(canvasRS.OriginY))
+		ggCtx.LineTo(lastSymmLineX, float64(canvasRS.Height+canvasRS.OriginY))
+		ggCtx.Stroke()
+
+		// begin left symmetrize
+		leftHalfRect := image.Rect(0, 0, int(lastSymmLineX)-canvasRS.OriginX, canvasRS.Height)
+		leftHalfImg := image.NewRGBA(leftHalfRect)
+		draw.Draw(leftHalfImg, leftHalfRect, currentWindowFrame, image.Pt(canvasRS.OriginX, canvasRS.OriginY), draw.Src)
+
+		tmpLeftHalfImg := imaging.FlipH(leftHalfImg)
+
+		tmpFullRect := image.Rect(0, 0, 2*leftHalfRect.Dx(), canvasRS.Height)
+		tmpFullImg := image.NewRGBA(tmpFullRect)
+
+		rightHalfRect := image.Rect(leftHalfRect.Dx(), 0, 2*leftHalfRect.Dx(), canvasRS.Height)
+		draw.Draw(tmpFullImg, leftHalfRect, leftHalfImg, image.Point{}, draw.Src)
+		draw.Draw(tmpFullImg, rightHalfRect, tmpLeftHalfImg, image.Point{}, draw.Src)
+
+		tmpFullImg2 := imaging.Crop(tmpFullImg.SubImage(tmpFullRect), image.Rect(0, 0, canvasRS.Width/2-2, canvasRS.Height))
+		ggCtx.DrawImage(tmpFullImg2, canvasRS.OriginX, canvasRS.OriginY)
+
+		// clear active tool selection
+		activeTool = 0
+		// clear indicators
+		for _, cs := range drawnIndicators {
+			ggCtx.SetHexColor("#dddddd")
+			ggCtx.DrawCircle(float64(cs.X), float64(cs.Y), indicatorCircleR+2)
+			ggCtx.Fill()
 		}
 
 		// send the frame to glfw window
