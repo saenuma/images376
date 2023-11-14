@@ -41,7 +41,8 @@ type CircleSpec struct {
 
 var drawnIndicators []CircleSpec
 var activeTool int
-var lastX, lastY float64 // used in drawing
+var lastX, lastY float64  // used in drawing
+var lastSymmLineX float64 // used in drawing
 
 func main() {
 	runtime.LockOSThread()
@@ -264,11 +265,36 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 
 		// SymLine Widget
 		if activeTool == SymmLineWidget && ctrlState == glfw.Release {
+			// clear last symmline
+			if int(lastSymmLineX) != 0 {
+				ggCtx.SetHexColor("#fff")
+				ggCtx.SetLineWidth(2)
+				ggCtx.MoveTo(lastSymmLineX, float64(canvasRS.OriginY))
+				ggCtx.LineTo(lastSymmLineX, float64(canvasRS.Height+canvasRS.OriginY))
+				ggCtx.Stroke()
+			}
+
 			ggCtx.SetHexColor("#999")
 			ggCtx.SetLineWidth(1)
 			ggCtx.MoveTo(xPos, float64(canvasRS.OriginY))
 			ggCtx.LineTo(xPos, float64(canvasRS.Height+canvasRS.OriginY))
 			ggCtx.Stroke()
+
+			lastSymmLineX = xPos
+
+		} else if activeTool == SymmLineWidget && ctrlState == glfw.Press {
+			// clear last symmline
+			if int(lastSymmLineX) != 0 {
+				ggCtx.SetHexColor("#fff")
+				ggCtx.SetLineWidth(2)
+				ggCtx.MoveTo(lastSymmLineX, float64(canvasRS.OriginY))
+				ggCtx.LineTo(lastSymmLineX, float64(canvasRS.Height+canvasRS.OriginY))
+				ggCtx.Stroke()
+
+			}
+
+			lastSymmLineX = 0
+
 		}
 
 		// send the frame to glfw window
