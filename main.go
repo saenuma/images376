@@ -13,11 +13,20 @@ import (
 )
 
 const (
-	fps          = 10
-	PencilWidget = 101
-	EraserWidget = 102
-	SaveWidget   = 103
-	CanvasWidget = 104
+	fps      = 10
+	fontSize = 20
+	toolBoxW = 150
+	toolBoxH = 40
+
+	PencilWidget        = 101
+	EraserWidget        = 102
+	SaveWidget          = 103
+	CanvasWidget        = 104
+	SymmLineWidget      = 105
+	LeftSymmWidget      = 106
+	RightSymmWidget     = 107
+	RefLineWidget       = 108
+	ClearRefLinesWidget = 109
 )
 
 // var objCoords map[g143.RectSpecs]any
@@ -41,7 +50,7 @@ func main() {
 	objCoords = make(map[int]g143.RectSpecs)
 	drawnIndicators = make([]CircleSpec, 0)
 
-	window := g143.NewWindow(1100, 600, "a draw tool (sample)", false)
+	window := g143.NewWindow(1450, 700, "images376: a 3d reference image creator. Majoring on faces", false)
 	allDraws(window)
 
 	// respond to the mouse
@@ -71,63 +80,100 @@ func allDraws(window *glfw.Window) {
 
 	// intro text
 	FontPath := getDefaultFontPath()
-	err := ggCtx.LoadFontFace(FontPath, 30)
-	if err != nil {
-		panic(err)
-	}
-	ggCtx.SetHexColor("#444444")
-	introText := "A Draw Tool Program (Sample)"
-	ggCtx.DrawString(introText, 20, 40)
-
 	// draw the tools
-	err = ggCtx.LoadFontFace(FontPath, 20)
+	err := ggCtx.LoadFontFace(FontPath, fontSize)
 	if err != nil {
 		panic(err)
 	}
+
+	// draw tools box
+	ggCtx.SetHexColor("#DAC166")
+	ggCtx.DrawRoundedRectangle(10, 10, toolBoxW+20, 380, 10)
+	ggCtx.Fill()
 
 	// pencil tool
-	ggCtx.SetHexColor("#DAC166")
-	ggCtx.DrawRoundedRectangle(20, 60, 120, 200, 10)
-	ggCtx.Fill()
-
 	ggCtx.SetHexColor("#dddddd")
-	ggCtx.DrawRectangle(30, 70, 100, 40)
+	ggCtx.DrawRectangle(20, 20, toolBoxW, toolBoxH)
 	ggCtx.Fill()
 
-	pencilRS := g143.RectSpecs{Width: 100, Height: 40, OriginX: 30, OriginY: 70}
+	pencilRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: 20}
 	objCoords[PencilWidget] = pencilRS
 
 	ggCtx.SetHexColor("#444444")
-	ggCtx.DrawString("Pencil", 40, 100)
+	ggCtx.DrawString("Pencil", 30, 30+fontSize)
 
-	// eraser tool
+	// symm line tool
 	ggCtx.SetHexColor("#dddddd")
-	ggCtx.DrawRectangle(30, 130, 100, 40)
+	ggCtx.DrawRectangle(20, 70, toolBoxW, toolBoxH)
 	ggCtx.Fill()
 
-	eraserRS := g143.RectSpecs{Width: 100, Height: 40, OriginX: 30, OriginY: 130}
-	objCoords[EraserWidget] = eraserRS
+	slRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: 70}
+	objCoords[SymmLineWidget] = slRS
 
 	ggCtx.SetHexColor("#444444")
-	ggCtx.DrawString("Eraser", 40, 160)
+	ggCtx.DrawString("Symm Line", 30, 80+fontSize)
+
+	// Left symm tool
+	ggCtx.SetHexColor("#dddddd")
+	lswY := slRS.OriginY + slRS.Height + 10
+	ggCtx.DrawRectangle(20, float64(lswY), toolBoxW, toolBoxH)
+	ggCtx.Fill()
+	lsRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: lswY}
+	objCoords[LeftSymmWidget] = lsRS
+
+	ggCtx.SetHexColor("#444444")
+	ggCtx.DrawString("Left Symm", 30, float64(lsRS.OriginY)+fontSize+10)
+
+	// Right symm tool
+	ggCtx.SetHexColor("#dddddd")
+	rswY := lsRS.OriginY + lsRS.Height + 10
+	ggCtx.DrawRectangle(20, float64(rswY), toolBoxW, toolBoxH)
+	ggCtx.Fill()
+	rsRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: rswY}
+	objCoords[RightSymmWidget] = rsRS
+
+	ggCtx.SetHexColor("#444")
+	ggCtx.DrawString("Right Symm", 30, float64(rsRS.OriginY)+fontSize+10)
+
+	// Refline tool
+	ggCtx.SetHexColor("#ddd")
+	rlwY := rsRS.OriginY + rsRS.Height + 10
+	ggCtx.DrawRectangle(20, float64(rlwY), toolBoxW, toolBoxH)
+	ggCtx.Fill()
+	rlRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: rlwY}
+	objCoords[RefLineWidget] = rlRS
+
+	ggCtx.SetHexColor("#444")
+	ggCtx.DrawString("Ref Line", 30, float64(rlRS.OriginY)+fontSize+10)
+
+	// Clear refs tool
+	ggCtx.SetHexColor("#ddd")
+	crwY := rlRS.OriginY + rlRS.Height + 10
+	ggCtx.DrawRectangle(20, float64(crwY), toolBoxW, toolBoxH)
+	ggCtx.Fill()
+	crRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: crwY}
+	objCoords[ClearRefLinesWidget] = crRS
+
+	ggCtx.SetHexColor("#444")
+	ggCtx.DrawString("Clear RLines", 30, float64(crRS.OriginY)+fontSize+10)
 
 	// save tool
-	ggCtx.SetHexColor("#dddddd")
-	ggCtx.DrawRectangle(30, 200, 100, 40)
+	ggCtx.SetHexColor("#ddd")
+	swY := crRS.OriginY + crRS.Height + 10
+	ggCtx.DrawRectangle(20, float64(swY), toolBoxW, toolBoxH)
 	ggCtx.Fill()
+	swRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: swY}
+	objCoords[SaveWidget] = swRS
 
-	saveRS := g143.RectSpecs{Width: 100, Height: 40, OriginX: 30, OriginY: 200}
-	objCoords[SaveWidget] = saveRS
-
-	ggCtx.SetHexColor("#444444")
-	ggCtx.DrawString("Save", 40, 230)
+	ggCtx.SetHexColor("#444")
+	ggCtx.DrawString("Save Ref", 30, float64(swRS.OriginY)+fontSize+10)
 
 	// Canvas
 	ggCtx.SetHexColor("#ffffff")
-	ggCtx.DrawRectangle(200, 60, 800, 500)
+	ggCtx.DrawRectangle(200, 10, 1200, 600)
 	ggCtx.Fill()
 
-	canvasRS := g143.RectSpecs{Width: 800, Height: 500, OriginX: 200, OriginY: 60}
+	canvasRS := g143.RectSpecs{Width: 1200, Height: 600, OriginX: 200, OriginY: 60}
 	objCoords[CanvasWidget] = canvasRS
 
 	// send the frame to glfw window
