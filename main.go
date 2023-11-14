@@ -176,6 +176,13 @@ func allDraws(window *glfw.Window) {
 	canvasRS := g143.RectSpecs{Width: 1200, Height: 600, OriginX: 200, OriginY: 10}
 	objCoords[CanvasWidget] = canvasRS
 
+	// draw divider
+	ggCtx.SetHexColor("#444")
+	ggCtx.SetLineWidth(2)
+	ggCtx.MoveTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY))
+	ggCtx.LineTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY)+float64(canvasRS.Height))
+	ggCtx.Stroke()
+
 	// send the frame to glfw window
 	windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
 	g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
@@ -274,6 +281,10 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 				ggCtx.Stroke()
 			}
 
+			// symline widget should only work in the left axis
+			if xPos > (float64(canvasRS.OriginX)+float64(canvasRS.Width))/2 {
+				return
+			}
 			ggCtx.SetHexColor("#999")
 			ggCtx.SetLineWidth(1)
 			ggCtx.MoveTo(xPos, float64(canvasRS.OriginY))
@@ -294,7 +305,6 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 			}
 
 			lastSymmLineX = 0
-
 		}
 
 		// send the frame to glfw window
@@ -332,12 +342,12 @@ func cursorPosCallback(window *glfw.Window, xpos float64, ypos float64) {
 			ggCtx.SetHexColor("#222222")
 
 			if int(lastX) != 0 {
-				ggCtx.SetLineWidth(3)
+				ggCtx.SetLineWidth(4)
 				ggCtx.MoveTo(lastX, lastY)
 				ggCtx.LineTo(xpos, ypos)
 				ggCtx.Stroke()
 			} else {
-				ggCtx.DrawCircle(xpos, ypos, 2)
+				ggCtx.DrawCircle(xpos, ypos, 3)
 				ggCtx.Fill()
 			}
 
