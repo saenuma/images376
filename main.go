@@ -13,20 +13,20 @@ import (
 )
 
 const (
-	fps      = 10
-	fontSize = 20
-	toolBoxW = 150
-	toolBoxH = 40
+	fps              = 10
+	fontSize         = 20
+	toolBoxW         = 150
+	toolBoxH         = 40
+	indicatorCircleR = 8
 
 	PencilWidget        = 101
-	EraserWidget        = 102
-	SaveWidget          = 103
-	CanvasWidget        = 104
-	SymmLineWidget      = 105
-	LeftSymmWidget      = 106
-	RightSymmWidget     = 107
-	RefLineWidget       = 108
-	ClearRefLinesWidget = 109
+	CanvasWidget        = 102
+	SymmLineWidget      = 103
+	LeftSymmWidget      = 104
+	RightSymmWidget     = 105
+	RefLineWidget       = 106
+	ClearRefLinesWidget = 107
+	SaveWidget          = 108
 )
 
 // var objCoords map[g143.RectSpecs]any
@@ -37,7 +37,6 @@ var currentWindowFrame image.Image
 type CircleSpec struct {
 	X int
 	Y int
-	R int
 }
 
 var drawnIndicators []CircleSpec
@@ -212,23 +211,23 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 	}
 
 	switch widgetCode {
-	case PencilWidget:
+	case PencilWidget, SymmLineWidget, RefLineWidget:
 
 		ggCtx := gg.NewContextForImage(currentWindowFrame)
 
-		activeTool = PencilWidget
+		activeTool = widgetCode
 
 		// clear indicators
 		for _, cs := range drawnIndicators {
 			ggCtx.SetHexColor("#dddddd")
-			ggCtx.DrawCircle(float64(cs.X), float64(cs.Y), float64(cs.R))
+			ggCtx.DrawCircle(float64(cs.X), float64(cs.Y), indicatorCircleR+2)
 			ggCtx.Fill()
 		}
 		// draw an indicator on the active tool
 		ggCtx.SetHexColor("#DAC166")
 		ggCtx.DrawCircle(float64(widgetRS.OriginX+widgetRS.Width-20), float64(widgetRS.OriginY+20), 10)
 		ggCtx.Fill()
-		drawnIndicators = append(drawnIndicators, CircleSpec{X: widgetRS.OriginX + widgetRS.Width - 20, Y: widgetRS.OriginY + 20, R: 8})
+		drawnIndicators = append(drawnIndicators, CircleSpec{X: widgetRS.OriginX + widgetRS.Width - 20, Y: widgetRS.OriginY + 20})
 
 		// send the frame to glfw window
 		windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
@@ -245,7 +244,7 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		// clear indicators
 		for _, cs := range drawnIndicators {
 			ggCtx.SetHexColor("#dddddd")
-			ggCtx.DrawCircle(float64(cs.X), float64(cs.Y), float64(cs.R))
+			ggCtx.DrawCircle(float64(cs.X), float64(cs.Y), indicatorCircleR+2)
 			ggCtx.Fill()
 		}
 
@@ -256,6 +255,30 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		draw.Draw(outImg, newImageRect, currentWindowFrame, image.Pt(canvasRS.OriginX, canvasRS.OriginY), draw.Src)
 
 		imaging.Save(outImg, time.Now().Format("20060102T150405MST")+".png")
+
+	case CanvasWidget:
+
+		ggCtx := gg.NewContextForImage(currentWindowFrame)
+		ctrlState := window.GetKey(glfw.KeyLeftControl)
+		canvasRS := objCoords[CanvasWidget]
+
+		// SymLine Widget
+		if activeTool == SymmLineWidget && ctrlState == glfw.Release {
+			ggCtx.SetHexColor("#999")
+			ggCtx.SetLineWidth(1)
+			ggCtx.MoveTo(xPos, float64(canvasRS.OriginY))
+			ggCtx.LineTo(xPos, float64(canvasRS.Height+canvasRS.OriginY))
+			ggCtx.Stroke()
+		}
+
+		// send the frame to glfw window
+		windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
+		g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
+		window.SwapBuffers()
+
+		// save the frame
+		currentWindowFrame = ggCtx.Image()
+
 	default:
 
 	}
@@ -277,6 +300,7 @@ func cursorPosCallback(window *glfw.Window, xpos float64, ypos float64) {
 
 	if g143.InRectSpecs(canvasRS, int(xpos), int(ypos)) && currentMouseAction == glfw.Press {
 
+		// Pencil Widget
 		if activeTool == PencilWidget && ctrlState == glfw.Release {
 			// draw circles
 			ggCtx.SetHexColor("#222222")
@@ -297,6 +321,7 @@ func cursorPosCallback(window *glfw.Window, xpos float64, ypos float64) {
 			ggCtx.DrawCircle(xpos, ypos, 10)
 			ggCtx.Fill()
 		}
+
 	}
 
 	// send the frame to glfw window
