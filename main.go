@@ -89,7 +89,7 @@ func allDraws(window *glfw.Window) {
 
 	// draw tools box
 	ggCtx.SetHexColor("#DAC166")
-	ggCtx.DrawRoundedRectangle(10, 10, toolBoxW+20, 380, 10)
+	ggCtx.DrawRoundedRectangle(10, 10, toolBoxW+20, 320, 10)
 	ggCtx.Fill()
 
 	// pencil tool
@@ -136,20 +136,9 @@ func allDraws(window *glfw.Window) {
 	ggCtx.SetHexColor("#444")
 	ggCtx.DrawString("Ref Line", 30, float64(rlRS.OriginY)+fontSize+10)
 
-	// Clear refs tool
-	ggCtx.SetHexColor("#ddd")
-	crwY := rlRS.OriginY + rlRS.Height + 10
-	ggCtx.DrawRectangle(20, float64(crwY), toolBoxW, toolBoxH)
-	ggCtx.Fill()
-	crRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: crwY}
-	objCoords[ClearRefLinesWidget] = crRS
-
-	ggCtx.SetHexColor("#444")
-	ggCtx.DrawString("Clear RLines", 30, float64(crRS.OriginY)+fontSize+10)
-
 	// save tool
 	ggCtx.SetHexColor("#ddd")
-	swY := crRS.OriginY + crRS.Height + 10
+	swY := rlRS.OriginY + rlRS.Height + 10
 	ggCtx.DrawRectangle(20, float64(swY), toolBoxW, toolBoxH)
 	ggCtx.Fill()
 	swRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: swY}
