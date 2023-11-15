@@ -23,10 +23,9 @@ const (
 	CanvasWidget        = 102
 	SymmLineWidget      = 103
 	LeftSymmWidget      = 104
-	RightSymmWidget     = 105
-	RefLineWidget       = 106
-	ClearRefLinesWidget = 107
-	SaveWidget          = 108
+	RefLineWidget       = 105
+	ClearRefLinesWidget = 106
+	SaveWidget          = 107
 )
 
 // var objCoords map[g143.RectSpecs]any
@@ -124,20 +123,9 @@ func allDraws(window *glfw.Window) {
 	ggCtx.SetHexColor("#444444")
 	ggCtx.DrawString("Left Symm", 30, float64(lsRS.OriginY)+fontSize+10)
 
-	// Right symm tool
-	ggCtx.SetHexColor("#dddddd")
-	rswY := lsRS.OriginY + lsRS.Height + 10
-	ggCtx.DrawRectangle(20, float64(rswY), toolBoxW, toolBoxH)
-	ggCtx.Fill()
-	rsRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: rswY}
-	objCoords[RightSymmWidget] = rsRS
-
-	ggCtx.SetHexColor("#444")
-	ggCtx.DrawString("Right Symm", 30, float64(rsRS.OriginY)+fontSize+10)
-
 	// Refline tool
 	ggCtx.SetHexColor("#ddd")
-	rlwY := rsRS.OriginY + rsRS.Height + 10
+	rlwY := lsRS.OriginY + lsRS.Height + 10
 	ggCtx.DrawRectangle(20, float64(rlwY), toolBoxW, toolBoxH)
 	ggCtx.Fill()
 	rlRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: rlwY}
