@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"image/draw"
+	"path/filepath"
 	"runtime"
 	"time"
 
@@ -241,7 +242,9 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		outImg := image.NewRGBA(newImageRect)
 		draw.Draw(outImg, newImageRect, currentWindowFrame, image.Pt(canvasRS.OriginX, canvasRS.OriginY), draw.Src)
 
-		imaging.Save(outImg, time.Now().Format("20060102T150405MST")+".png")
+		rootPath, _ := GetRootPath()
+		outPath := filepath.Join(rootPath, time.Now().Format("20060102T150405MST")+".png")
+		imaging.Save(outImg, outPath)
 
 	case CanvasWidget:
 
