@@ -42,12 +42,14 @@ var drawnIndicators []CircleSpec
 var activeTool int
 var lastX, lastY float64  // used in drawing
 var lastSymmLineX float64 // used in drawing
+var refLinesDrawnPosY []float64
 
 func main() {
 	runtime.LockOSThread()
 
 	objCoords = make(map[int]g143.RectSpecs)
 	drawnIndicators = make([]CircleSpec, 0)
+	refLinesDrawnPosY = make([]float64, 0)
 
 	window := g143.NewWindow(1450, 700, "images376: a 3d reference image creator. Majoring on faces", false)
 	allDraws(window)
@@ -293,6 +295,30 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 			}
 
 			lastSymmLineX = 0
+		}
+
+		// Reference Line Widget
+		if activeTool == RefLineWidget && ctrlState == glfw.Release {
+
+			ggCtx.SetHexColor(GetRandomColorInHex())
+			ggCtx.SetLineWidth(1)
+			ggCtx.MoveTo(float64(canvasRS.OriginX), yPos)
+			ggCtx.LineTo(float64(canvasRS.OriginX+canvasRS.Width), yPos)
+			ggCtx.Stroke()
+
+			refLinesDrawnPosY = append(refLinesDrawnPosY, yPos)
+
+		} else if activeTool == RefLineWidget && ctrlState == glfw.Press {
+
+			// clear old ref lines
+			for _, oldRefLinePos := range refLinesDrawnPosY {
+				ggCtx.SetHexColor("#fff")
+				ggCtx.SetLineWidth(2)
+				ggCtx.MoveTo(float64(canvasRS.OriginX), oldRefLinePos)
+				ggCtx.LineTo(float64(canvasRS.OriginX+canvasRS.Width), oldRefLinePos)
+				ggCtx.Stroke()
+			}
+
 		}
 
 		// send the frame to glfw window
