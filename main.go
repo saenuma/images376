@@ -273,7 +273,7 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 
 		rootPath, _ := GetRootPath()
 		outPath := filepath.Join(rootPath, time.Now().Format("20060102T150405MST")+".png")
-		imaging.Save(outImg, outPath)
+		imaging.Save(pencilLayerImg, outPath)
 
 	case CanvasWidget:
 
