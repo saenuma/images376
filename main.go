@@ -189,6 +189,12 @@ func allDraws(window *glfw.Window) {
 	ggCtx.LineTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY)+float64(canvasRS.Height))
 	ggCtx.Stroke()
 
+	// write indicators
+	ggCtx.SetHexColor("#444")
+	indicatorsY := canvasRS.OriginY + canvasRS.Height + 20
+	ggCtx.DrawString("Front View", toolBoxW+300, float64(indicatorsY)+fontSize)
+	ggCtx.DrawString("Side View", toolBoxW+300+canvasWidth/2, float64(indicatorsY)+fontSize)
+
 	// send the frame to glfw window
 	windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
 	g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
