@@ -464,6 +464,7 @@ func cursorPosCallback(window *glfw.Window, xpos float64, ypos float64) {
 
 		pencilLayerImg = pencilLayerggCtx.Image()
 		ggCtx.DrawImage(pencilLayerggCtx.Image(), canvasRS.OriginX, canvasRS.OriginY)
+		ggCtx.DrawImage(linesLayerImg, canvasRS.OriginX, canvasRS.OriginY)
 
 		// draw divider
 		ggCtx.SetHexColor("#444")
