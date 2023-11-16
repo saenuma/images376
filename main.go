@@ -356,16 +356,12 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 			return
 		}
 		// clear last symmLine
-		ggCtx.SetHexColor("#fff")
-		ggCtx.SetLineWidth(2)
-		ggCtx.MoveTo(lastSymmLineX, float64(canvasRS.OriginY))
-		ggCtx.LineTo(lastSymmLineX, float64(canvasRS.Height+canvasRS.OriginY))
-		ggCtx.Stroke()
+		linesLayerImg = image.NewRGBA(image.Rect(0, 0, canvasWidth, canvasHeight))
 
 		// begin left symmetrize
-		leftHalfRect := image.Rect(0, 0, int(lastSymmLineX)-canvasRS.OriginX, canvasRS.Height)
+		leftHalfRect := image.Rect(0, 0, int(lastSymmLineX), canvasRS.Height)
 		leftHalfImg := image.NewRGBA(leftHalfRect)
-		draw.Draw(leftHalfImg, leftHalfRect, currentWindowFrame, image.Pt(canvasRS.OriginX, canvasRS.OriginY), draw.Src)
+		draw.Draw(leftHalfImg, leftHalfRect, pencilLayerImg, image.Point{}, draw.Src)
 
 		tmpLeftHalfImg := imaging.FlipH(leftHalfImg)
 
@@ -377,7 +373,18 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		draw.Draw(tmpFullImg, rightHalfRect, tmpLeftHalfImg, image.Point{}, draw.Src)
 
 		tmpFullImg2 := imaging.Crop(tmpFullImg.SubImage(tmpFullRect), image.Rect(0, 0, canvasRS.Width/2-2, canvasRS.Height))
-		ggCtx.DrawImage(tmpFullImg2, canvasRS.OriginX, canvasRS.OriginY)
+
+		pencilLayerggCtx := gg.NewContextForImage(pencilLayerImg)
+		pencilLayerggCtx.DrawImage(tmpFullImg2, 0, 0)
+		pencilLayerImg = pencilLayerggCtx.Image()
+
+		ggCtx.DrawImage(pencilLayerggCtx.Image(), canvasRS.OriginX, canvasRS.OriginY)
+		// draw divider
+		ggCtx.SetHexColor("#444")
+		ggCtx.SetLineWidth(2)
+		ggCtx.MoveTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY))
+		ggCtx.LineTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY)+float64(canvasRS.Height))
+		ggCtx.Stroke()
 
 		// clear active tool selection
 		activeTool = 0
