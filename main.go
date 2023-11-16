@@ -36,8 +36,6 @@ const (
 // var objCoords map[g143.RectSpecs]any
 var objCoords map[int]g143.RectSpecs
 
-var currentWindowFrame image.Image
-
 type CircleSpec struct {
 	X int
 	Y int
@@ -49,6 +47,7 @@ var lastX, lastY float64  // used in drawing
 var lastSymmLineX float64 // used in drawing
 
 // images
+var currentWindowFrame image.Image
 var pencilLayerImg image.Image
 var linesLayerImg image.Image
 
