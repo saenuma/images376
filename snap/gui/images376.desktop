@@ -1,0 +1,6 @@
+[Desktop Entry]
+Version=1.0.0
+Type=Application
+Name=Images376
+Exec=images376
+Icon=${SNAP}/meta/gui/images376.png

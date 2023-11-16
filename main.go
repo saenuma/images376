@@ -3,6 +3,8 @@ package main
 import (
 	"image"
 	"image/draw"
+	"os/exec"
+	"path/filepath"
 	"runtime"
 	"time"
 
@@ -28,6 +30,7 @@ const (
 	RefLineWidget       = 105
 	ClearRefLinesWidget = 106
 	SaveWidget          = 107
+	OpenWDWidget        = 108
 )
 
 // var objCoords map[g143.RectSpecs]any
@@ -162,6 +165,17 @@ func allDraws(window *glfw.Window) {
 	ggCtx.SetHexColor("#444")
 	ggCtx.DrawString("Save Ref", 30, float64(swRS.OriginY)+fontSize+10)
 
+	// Open Outputs
+	ggCtx.SetHexColor("#ddd")
+	ooY := swRS.OriginY + swRS.Height + 10
+	ggCtx.DrawRectangle(20, float64(ooY), toolBoxW, toolBoxH)
+	ggCtx.Fill()
+	ooRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: ooY}
+	objCoords[OpenWDWidget] = ooRS
+
+	ggCtx.SetHexColor("#444")
+	ggCtx.DrawString("Open Folder", 30, float64(ooRS.OriginY)+fontSize+10)
+
 	// Canvas
 	ggCtx.SetHexColor("#ffffff")
 	ggCtx.DrawRectangle(200, 10, 1200, 600)
@@ -212,6 +226,7 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		return
 	}
 
+	rootPath, _ := GetRootPath()
 	switch widgetCode {
 	case PencilWidget, SymmLineWidget, RefLineWidget:
 
@@ -256,7 +271,9 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		// outImg := image.NewRGBA(newImageRect)
 		// draw.Draw(outImg, newImageRect, currentWindowFrame, image.Pt(canvasRS.OriginX, canvasRS.OriginY), draw.Src)
 
-		imaging.Save(pencilLayerImg, time.Now().Format("20060102T150405MST")+".png")
+		rootPath, _ := GetRootPath()
+		outPath := filepath.Join(rootPath, time.Now().Format("20060102T150405MST")+".png")
+		imaging.Save(outImg, outPath)
 
 	case CanvasWidget:
 
@@ -385,6 +402,12 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		// save the frame
 		currentWindowFrame = ggCtx.Image()
 
+	case OpenWDWidget:
+		if runtime.GOOS == "windows" {
+			exec.Command("cmd", "/C", "start", rootPath).Run()
+		} else if runtime.GOOS == "linux" {
+			exec.Command("xdg-open", rootPath).Run()
+		}
 	default:
 
 	}

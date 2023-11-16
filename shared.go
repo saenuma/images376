@@ -3,6 +3,11 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // RGBColor RBG Color Type
@@ -34,4 +39,20 @@ func GetRandomColorInHex() string {
 	color := GetRandomColorInRgb()
 	hex := "#" + getHex(color.Red) + getHex(color.Green) + getHex(color.Blue)
 	return hex
+}
+
+func GetRootPath() (string, error) {
+	hd, err := os.UserHomeDir()
+	if err != nil {
+		return "", errors.Wrap(err, "os error")
+	}
+
+	dd := os.Getenv("SNAP_USER_COMMON")
+
+	if strings.HasPrefix(dd, filepath.Join(hd, "snap", "go")) || dd == "" {
+		dd = filepath.Join(hd, "Images376")
+		os.MkdirAll(dd, 0777)
+	}
+
+	return dd, nil
 }
