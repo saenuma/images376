@@ -47,7 +47,6 @@ var drawnIndicators []CircleSpec
 var activeTool int
 var lastX, lastY float64  // used in drawing
 var lastSymmLineX float64 // used in drawing
-var refLinesDrawnPosY []float64
 
 // images
 var pencilLayerImg image.Image
@@ -67,7 +66,6 @@ func main() {
 
 	objCoords = make(map[int]g143.RectSpecs)
 	drawnIndicators = make([]CircleSpec, 0)
-	refLinesDrawnPosY = make([]float64, 0)
 
 	window := g143.NewWindow(1450, 700, "images376: a 3d reference image creator. Majoring on faces", false)
 	allDraws(window)
@@ -265,15 +263,17 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 			ggCtx.Fill()
 		}
 
-		// canvasRS := objCoords[CanvasWidget]
-
-		// newImageRect := image.Rect(0, 0, canvasRS.Width, canvasRS.Height)
-		// outImg := image.NewRGBA(newImageRect)
-		// draw.Draw(outImg, newImageRect, currentWindowFrame, image.Pt(canvasRS.OriginX, canvasRS.OriginY), draw.Src)
-
 		rootPath, _ := GetRootPath()
 		outPath := filepath.Join(rootPath, time.Now().Format("20060102T150405MST")+".png")
 		imaging.Save(pencilLayerImg, outPath)
+
+		// send the frame to glfw window
+		windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
+		g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
+		window.SwapBuffers()
+
+		// save the frame
+		currentWindowFrame = ggCtx.Image()
 
 	case CanvasWidget:
 
@@ -282,7 +282,7 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		canvasRS := objCoords[CanvasWidget]
 
 		linesLayerggCtx := gg.NewContextForImage(linesLayerImg)
-		translastedMouseX, _ := xPos-float64(canvasRS.OriginX), yPos-float64(canvasRS.OriginY)
+		translastedMouseX, translatedMouseY := xPos-float64(canvasRS.OriginX), yPos-float64(canvasRS.OriginY)
 
 		// SymLine Widget
 		if activeTool == SymmLineWidget && ctrlState == glfw.Release {
@@ -312,6 +312,24 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 			lastSymmLineX = 0
 		}
 
+		// Reference Line Widget
+		if activeTool == RefLineWidget && ctrlState == glfw.Release {
+
+			linesLayerggCtx.SetHexColor(GetRandomColorInHex())
+			linesLayerggCtx.SetLineWidth(1)
+			linesLayerggCtx.MoveTo(0, translatedMouseY)
+			linesLayerggCtx.LineTo(float64(canvasRS.Width), translatedMouseY)
+			linesLayerggCtx.Stroke()
+
+			linesLayerImg = linesLayerggCtx.Image()
+
+		} else if activeTool == RefLineWidget && ctrlState == glfw.Press {
+
+			// clear old ref lines
+			linesLayerImg = image.NewRGBA(image.Rect(0, 0, canvasWidth, canvasHeight))
+			linesLayerggCtx = gg.NewContextForImage(linesLayerImg)
+		}
+
 		ggCtx.DrawImage(pencilLayerImg, canvasRS.OriginX, canvasRS.OriginY)
 		ggCtx.DrawImage(linesLayerggCtx.Image(), canvasRS.OriginX, canvasRS.OriginY)
 
@@ -321,30 +339,6 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		ggCtx.MoveTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY))
 		ggCtx.LineTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY)+float64(canvasRS.Height))
 		ggCtx.Stroke()
-
-		// Reference Line Widget
-		if activeTool == RefLineWidget && ctrlState == glfw.Release {
-
-			ggCtx.SetHexColor(GetRandomColorInHex())
-			ggCtx.SetLineWidth(1)
-			ggCtx.MoveTo(float64(canvasRS.OriginX), yPos)
-			ggCtx.LineTo(float64(canvasRS.OriginX+canvasRS.Width), yPos)
-			ggCtx.Stroke()
-
-			refLinesDrawnPosY = append(refLinesDrawnPosY, yPos)
-
-		} else if activeTool == RefLineWidget && ctrlState == glfw.Press {
-
-			// clear old ref lines
-			for _, oldRefLinePos := range refLinesDrawnPosY {
-				ggCtx.SetHexColor("#fff")
-				ggCtx.SetLineWidth(2)
-				ggCtx.MoveTo(float64(canvasRS.OriginX), oldRefLinePos)
-				ggCtx.LineTo(float64(canvasRS.OriginX+canvasRS.Width), oldRefLinePos)
-				ggCtx.Stroke()
-			}
-
-		}
 
 		// send the frame to glfw window
 		windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
