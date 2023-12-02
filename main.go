@@ -20,6 +20,8 @@ const (
 	toolBoxW         = 150
 	toolBoxH         = 40
 	indicatorCircleR = 8
+	canvasWidth      = 1200
+	canvasHeight     = 600
 
 	PencilWidget        = 101
 	CanvasWidget        = 102
@@ -34,8 +36,6 @@ const (
 // var objCoords map[g143.RectSpecs]any
 var objCoords map[int]g143.RectSpecs
 
-var currentWindowFrame image.Image
-
 type CircleSpec struct {
 	X int
 	Y int
@@ -45,14 +45,26 @@ var drawnIndicators []CircleSpec
 var activeTool int
 var lastX, lastY float64  // used in drawing
 var lastSymmLineX float64 // used in drawing
-var refLinesDrawnPosY []float64
+
+// images
+var currentWindowFrame image.Image
+var pencilLayerImg image.Image
+var linesLayerImg image.Image
 
 func main() {
 	runtime.LockOSThread()
 
+	// white image in pencilLayerImg
+	ggCtx := gg.NewContext(canvasWidth, canvasHeight)
+	ggCtx.DrawRectangle(0, 0, float64(canvasWidth), float64(canvasHeight))
+	ggCtx.SetHexColor("#fff")
+	ggCtx.Fill()
+	pencilLayerImg = ggCtx.Image()
+
+	linesLayerImg = image.NewRGBA(image.Rect(0, 0, canvasWidth, canvasHeight))
+
 	objCoords = make(map[int]g143.RectSpecs)
 	drawnIndicators = make([]CircleSpec, 0)
-	refLinesDrawnPosY = make([]float64, 0)
 
 	window := g143.NewWindow(1450, 700, "images376: a 3d reference image creator. Majoring on faces", false)
 	allDraws(window)
@@ -176,6 +188,12 @@ func allDraws(window *glfw.Window) {
 	ggCtx.LineTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY)+float64(canvasRS.Height))
 	ggCtx.Stroke()
 
+	// write indicators
+	ggCtx.SetHexColor("#444")
+	indicatorsY := canvasRS.OriginY + canvasRS.Height + 20
+	ggCtx.DrawString("Front View", toolBoxW+300, float64(indicatorsY)+fontSize)
+	ggCtx.DrawString("Side View", toolBoxW+300+canvasWidth/2, float64(indicatorsY)+fontSize)
+
 	// send the frame to glfw window
 	windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
 	g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
@@ -250,15 +268,17 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 			ggCtx.Fill()
 		}
 
-		canvasRS := objCoords[CanvasWidget]
-
-		newImageRect := image.Rect(0, 0, canvasRS.Width, canvasRS.Height)
-		outImg := image.NewRGBA(newImageRect)
-		draw.Draw(outImg, newImageRect, currentWindowFrame, image.Pt(canvasRS.OriginX, canvasRS.OriginY), draw.Src)
-
 		rootPath, _ := GetRootPath()
 		outPath := filepath.Join(rootPath, time.Now().Format("20060102T150405MST")+".png")
-		imaging.Save(outImg, outPath)
+		imaging.Save(pencilLayerImg, outPath)
+
+		// send the frame to glfw window
+		windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
+		g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
+		window.SwapBuffers()
+
+		// save the frame
+		currentWindowFrame = ggCtx.Image()
 
 	case CanvasWidget:
 
@@ -266,39 +286,33 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		ctrlState := window.GetKey(glfw.KeyLeftControl)
 		canvasRS := objCoords[CanvasWidget]
 
+		linesLayerggCtx := gg.NewContextForImage(linesLayerImg)
+		translastedMouseX, translatedMouseY := xPos-float64(canvasRS.OriginX), yPos-float64(canvasRS.OriginY)
+
 		// SymLine Widget
 		if activeTool == SymmLineWidget && ctrlState == glfw.Release {
 			// clear last symmline
 			if int(lastSymmLineX) != 0 {
-				ggCtx.SetHexColor("#fff")
-				ggCtx.SetLineWidth(2)
-				ggCtx.MoveTo(lastSymmLineX, float64(canvasRS.OriginY))
-				ggCtx.LineTo(lastSymmLineX, float64(canvasRS.Height+canvasRS.OriginY))
-				ggCtx.Stroke()
+				linesLayerImg = image.NewRGBA(image.Rect(0, 0, canvasWidth, canvasHeight))
+				linesLayerggCtx = gg.NewContextForImage(linesLayerImg)
 			}
 
 			// symline widget should only work in the left axis
 			if xPos > (float64(canvasRS.OriginX) + float64(canvasRS.Width/2)) {
 				return
 			}
-			ggCtx.SetHexColor("#999")
-			ggCtx.SetLineWidth(1)
-			ggCtx.MoveTo(xPos, float64(canvasRS.OriginY))
-			ggCtx.LineTo(xPos, float64(canvasRS.Height+canvasRS.OriginY))
-			ggCtx.Stroke()
 
-			lastSymmLineX = xPos
+			linesLayerggCtx.SetHexColor("#999")
+			linesLayerggCtx.SetLineWidth(1)
+			linesLayerggCtx.MoveTo(translastedMouseX, 0)
+			linesLayerggCtx.LineTo(translastedMouseX, float64(canvasRS.Height))
+			linesLayerggCtx.Stroke()
+
+			lastSymmLineX = translastedMouseX
 
 		} else if activeTool == SymmLineWidget && ctrlState == glfw.Press {
-			// clear last symmline
-			if int(lastSymmLineX) != 0 {
-				ggCtx.SetHexColor("#fff")
-				ggCtx.SetLineWidth(2)
-				ggCtx.MoveTo(lastSymmLineX, float64(canvasRS.OriginY))
-				ggCtx.LineTo(lastSymmLineX, float64(canvasRS.Height+canvasRS.OriginY))
-				ggCtx.Stroke()
-
-			}
+			linesLayerImg = image.NewRGBA(image.Rect(0, 0, canvasWidth, canvasHeight))
+			linesLayerggCtx = gg.NewContextForImage(linesLayerImg)
 
 			lastSymmLineX = 0
 		}
@@ -306,26 +320,30 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		// Reference Line Widget
 		if activeTool == RefLineWidget && ctrlState == glfw.Release {
 
-			ggCtx.SetHexColor(GetRandomColorInHex())
-			ggCtx.SetLineWidth(1)
-			ggCtx.MoveTo(float64(canvasRS.OriginX), yPos)
-			ggCtx.LineTo(float64(canvasRS.OriginX+canvasRS.Width), yPos)
-			ggCtx.Stroke()
+			linesLayerggCtx.SetHexColor(GetRandomColorInHex())
+			linesLayerggCtx.SetLineWidth(1)
+			linesLayerggCtx.MoveTo(0, translatedMouseY)
+			linesLayerggCtx.LineTo(float64(canvasRS.Width), translatedMouseY)
+			linesLayerggCtx.Stroke()
 
-			refLinesDrawnPosY = append(refLinesDrawnPosY, yPos)
+			linesLayerImg = linesLayerggCtx.Image()
 
 		} else if activeTool == RefLineWidget && ctrlState == glfw.Press {
 
 			// clear old ref lines
-			for _, oldRefLinePos := range refLinesDrawnPosY {
-				ggCtx.SetHexColor("#fff")
-				ggCtx.SetLineWidth(2)
-				ggCtx.MoveTo(float64(canvasRS.OriginX), oldRefLinePos)
-				ggCtx.LineTo(float64(canvasRS.OriginX+canvasRS.Width), oldRefLinePos)
-				ggCtx.Stroke()
-			}
-
+			linesLayerImg = image.NewRGBA(image.Rect(0, 0, canvasWidth, canvasHeight))
+			linesLayerggCtx = gg.NewContextForImage(linesLayerImg)
 		}
+
+		ggCtx.DrawImage(pencilLayerImg, canvasRS.OriginX, canvasRS.OriginY)
+		ggCtx.DrawImage(linesLayerggCtx.Image(), canvasRS.OriginX, canvasRS.OriginY)
+
+		// draw divider
+		ggCtx.SetHexColor("#444")
+		ggCtx.SetLineWidth(2)
+		ggCtx.MoveTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY))
+		ggCtx.LineTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY)+float64(canvasRS.Height))
+		ggCtx.Stroke()
 
 		// send the frame to glfw window
 		windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
@@ -343,16 +361,12 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 			return
 		}
 		// clear last symmLine
-		ggCtx.SetHexColor("#fff")
-		ggCtx.SetLineWidth(2)
-		ggCtx.MoveTo(lastSymmLineX, float64(canvasRS.OriginY))
-		ggCtx.LineTo(lastSymmLineX, float64(canvasRS.Height+canvasRS.OriginY))
-		ggCtx.Stroke()
+		linesLayerImg = image.NewRGBA(image.Rect(0, 0, canvasWidth, canvasHeight))
 
 		// begin left symmetrize
-		leftHalfRect := image.Rect(0, 0, int(lastSymmLineX)-canvasRS.OriginX, canvasRS.Height)
+		leftHalfRect := image.Rect(0, 0, int(lastSymmLineX), canvasRS.Height)
 		leftHalfImg := image.NewRGBA(leftHalfRect)
-		draw.Draw(leftHalfImg, leftHalfRect, currentWindowFrame, image.Pt(canvasRS.OriginX, canvasRS.OriginY), draw.Src)
+		draw.Draw(leftHalfImg, leftHalfRect, pencilLayerImg, image.Point{}, draw.Src)
 
 		tmpLeftHalfImg := imaging.FlipH(leftHalfImg)
 
@@ -364,7 +378,18 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		draw.Draw(tmpFullImg, rightHalfRect, tmpLeftHalfImg, image.Point{}, draw.Src)
 
 		tmpFullImg2 := imaging.Crop(tmpFullImg.SubImage(tmpFullRect), image.Rect(0, 0, canvasRS.Width/2-2, canvasRS.Height))
-		ggCtx.DrawImage(tmpFullImg2, canvasRS.OriginX, canvasRS.OriginY)
+
+		pencilLayerggCtx := gg.NewContextForImage(pencilLayerImg)
+		pencilLayerggCtx.DrawImage(tmpFullImg2, 0, 0)
+		pencilLayerImg = pencilLayerggCtx.Image()
+
+		ggCtx.DrawImage(pencilLayerggCtx.Image(), canvasRS.OriginX, canvasRS.OriginY)
+		// draw divider
+		ggCtx.SetHexColor("#444")
+		ggCtx.SetLineWidth(2)
+		ggCtx.MoveTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY))
+		ggCtx.LineTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY)+float64(canvasRS.Height))
+		ggCtx.Stroke()
 
 		// clear active tool selection
 		activeTool = 0
@@ -400,6 +425,8 @@ func cursorPosCallback(window *glfw.Window, xpos float64, ypos float64) {
 	ggCtx := gg.NewContextForImage(currentWindowFrame)
 	canvasRS := objCoords[CanvasWidget]
 
+	pencilLayerggCtx := gg.NewContextForImage(pencilLayerImg)
+
 	currentMouseAction := window.GetMouseButton(glfw.MouseButtonLeft)
 
 	if currentMouseAction == glfw.Release {
@@ -411,26 +438,39 @@ func cursorPosCallback(window *glfw.Window, xpos float64, ypos float64) {
 	if g143.InRectSpecs(canvasRS, int(xpos), int(ypos)) && currentMouseAction == glfw.Press {
 
 		// Pencil Widget
+		translastedMouseX, translatedMouseY := xpos-float64(canvasRS.OriginX), ypos-float64(canvasRS.OriginY)
 		if activeTool == PencilWidget && ctrlState == glfw.Release {
 			// draw circles
-			ggCtx.SetHexColor("#222222")
+			pencilLayerggCtx.SetHexColor("#222222")
 
 			if int(lastX) != 0 {
-				ggCtx.SetLineWidth(4)
-				ggCtx.MoveTo(lastX, lastY)
-				ggCtx.LineTo(xpos, ypos)
-				ggCtx.Stroke()
+				pencilLayerggCtx.SetLineWidth(4)
+				pencilLayerggCtx.MoveTo(lastX, lastY)
+				pencilLayerggCtx.LineTo(translastedMouseX, translatedMouseY)
+				pencilLayerggCtx.Stroke()
 			} else {
-				ggCtx.DrawCircle(xpos, ypos, 3)
-				ggCtx.Fill()
+				pencilLayerggCtx.DrawCircle(translastedMouseX, translatedMouseY, 3)
+				pencilLayerggCtx.Fill()
 			}
 
-			lastX, lastY = xpos, ypos
+			lastX, lastY = translastedMouseX, translatedMouseY
+
 		} else if activeTool == PencilWidget && ctrlState == glfw.Press {
-			ggCtx.SetHexColor("#ffffff")
-			ggCtx.DrawCircle(xpos, ypos, 10)
-			ggCtx.Fill()
+			pencilLayerggCtx.SetHexColor("#ffffff")
+			pencilLayerggCtx.DrawCircle(translastedMouseX, translatedMouseY, 10)
+			pencilLayerggCtx.Fill()
 		}
+
+		pencilLayerImg = pencilLayerggCtx.Image()
+		ggCtx.DrawImage(pencilLayerggCtx.Image(), canvasRS.OriginX, canvasRS.OriginY)
+		ggCtx.DrawImage(linesLayerImg, canvasRS.OriginX, canvasRS.OriginY)
+
+		// draw divider
+		ggCtx.SetHexColor("#444")
+		ggCtx.SetLineWidth(2)
+		ggCtx.MoveTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY))
+		ggCtx.LineTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY)+float64(canvasRS.Height))
+		ggCtx.Stroke()
 
 	}
 
