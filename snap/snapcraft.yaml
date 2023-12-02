@@ -25,7 +25,7 @@ parts:
       - build-essential
       - gcc
       - libgl1-mesa-dev
-      - xorg-dev
+      - libwayland-dev
       - libc6-dev
     override-build: |
       set -xe
