@@ -419,7 +419,18 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 	}
 }
 
+var count = 0
+
 func cursorPosCallback(window *glfw.Window, xpos float64, ypos float64) {
+	if runtime.GOOS == "linux" {
+		// linux fires too many events
+		count += 1
+		if count != 10 {
+			return
+		} else {
+			count = 0
+		}
+	}
 	wWidth, wHeight := window.GetSize()
 
 	ggCtx := gg.NewContextForImage(currentWindowFrame)
@@ -448,17 +459,16 @@ func cursorPosCallback(window *glfw.Window, xpos float64, ypos float64) {
 				pencilLayerggCtx.MoveTo(lastX, lastY)
 				pencilLayerggCtx.LineTo(translastedMouseX, translatedMouseY)
 				pencilLayerggCtx.Stroke()
-			} else {
-				pencilLayerggCtx.DrawCircle(translastedMouseX, translatedMouseY, 3)
-				pencilLayerggCtx.Fill()
 			}
 
 			lastX, lastY = translastedMouseX, translatedMouseY
 
 		} else if activeTool == PencilWidget && ctrlState == glfw.Press {
 			pencilLayerggCtx.SetHexColor("#ffffff")
-			pencilLayerggCtx.DrawCircle(translastedMouseX, translatedMouseY, 10)
-			pencilLayerggCtx.Fill()
+			pencilLayerggCtx.SetLineWidth(20)
+			pencilLayerggCtx.MoveTo(lastX, lastY)
+			pencilLayerggCtx.LineTo(translastedMouseX, translatedMouseY)
+			pencilLayerggCtx.Stroke()
 		}
 
 		pencilLayerImg = pencilLayerggCtx.Image()
