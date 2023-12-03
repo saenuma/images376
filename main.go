@@ -450,26 +450,24 @@ func cursorPosCallback(window *glfw.Window, xpos float64, ypos float64) {
 
 		// Pencil Widget
 		translastedMouseX, translatedMouseY := xpos-float64(canvasRS.OriginX), ypos-float64(canvasRS.OriginY)
-		if activeTool == PencilWidget && ctrlState == glfw.Release {
+		if activeTool == PencilWidget && ctrlState == glfw.Release && int(lastX) != 0 {
 			// draw circles
 			pencilLayerggCtx.SetHexColor("#222222")
 
-			if int(lastX) != 0 {
-				pencilLayerggCtx.SetLineWidth(4)
-				pencilLayerggCtx.MoveTo(lastX, lastY)
-				pencilLayerggCtx.LineTo(translastedMouseX, translatedMouseY)
-				pencilLayerggCtx.Stroke()
-			}
+			pencilLayerggCtx.SetLineWidth(4)
+			pencilLayerggCtx.MoveTo(lastX, lastY)
+			pencilLayerggCtx.LineTo(translastedMouseX, translatedMouseY)
+			pencilLayerggCtx.Stroke()
 
-			lastX, lastY = translastedMouseX, translatedMouseY
-
-		} else if activeTool == PencilWidget && ctrlState == glfw.Press {
+		} else if activeTool == PencilWidget && ctrlState == glfw.Press && int(lastX) != 0 {
 			pencilLayerggCtx.SetHexColor("#ffffff")
 			pencilLayerggCtx.SetLineWidth(20)
 			pencilLayerggCtx.MoveTo(lastX, lastY)
 			pencilLayerggCtx.LineTo(translastedMouseX, translatedMouseY)
 			pencilLayerggCtx.Stroke()
 		}
+
+		lastX, lastY = translastedMouseX, translatedMouseY
 
 		pencilLayerImg = pencilLayerggCtx.Image()
 		ggCtx.DrawImage(pencilLayerggCtx.Image(), canvasRS.OriginX, canvasRS.OriginY)
