@@ -33,8 +33,8 @@ const (
 	OpenWDWidget        = 108
 )
 
-// var objCoords map[g143.RectSpecs]any
-var objCoords map[int]g143.RectSpecs
+// var objCoords map[g143.Rect]any
+var objCoords map[int]g143.Rect
 
 type CircleSpec struct {
 	X int
@@ -63,7 +63,7 @@ func main() {
 
 	linesLayerImg = image.NewRGBA(image.Rect(0, 0, canvasWidth, canvasHeight))
 
-	objCoords = make(map[int]g143.RectSpecs)
+	objCoords = make(map[int]g143.Rect)
 	drawnIndicators = make([]CircleSpec, 0)
 
 	window := g143.NewWindow(1450, 700, "images376: a 3d reference image creator. Majoring on faces", false)
@@ -112,7 +112,7 @@ func allDraws(window *glfw.Window) {
 	ggCtx.DrawRectangle(20, 20, toolBoxW, toolBoxH)
 	ggCtx.Fill()
 
-	pencilRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: 20}
+	pencilRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: 20}
 	objCoords[PencilWidget] = pencilRS
 
 	ggCtx.SetHexColor("#444444")
@@ -123,7 +123,7 @@ func allDraws(window *glfw.Window) {
 	ggCtx.DrawRectangle(20, 70, toolBoxW, toolBoxH)
 	ggCtx.Fill()
 
-	slRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: 70}
+	slRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: 70}
 	objCoords[SymmLineWidget] = slRS
 
 	ggCtx.SetHexColor("#444444")
@@ -134,7 +134,7 @@ func allDraws(window *glfw.Window) {
 	lswY := slRS.OriginY + slRS.Height + 10
 	ggCtx.DrawRectangle(20, float64(lswY), toolBoxW, toolBoxH)
 	ggCtx.Fill()
-	lsRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: lswY}
+	lsRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: lswY}
 	objCoords[LeftSymmWidget] = lsRS
 
 	ggCtx.SetHexColor("#444444")
@@ -145,7 +145,7 @@ func allDraws(window *glfw.Window) {
 	rlwY := lsRS.OriginY + lsRS.Height + 10
 	ggCtx.DrawRectangle(20, float64(rlwY), toolBoxW, toolBoxH)
 	ggCtx.Fill()
-	rlRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: rlwY}
+	rlRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: rlwY}
 	objCoords[RefLineWidget] = rlRS
 
 	ggCtx.SetHexColor("#444")
@@ -156,7 +156,7 @@ func allDraws(window *glfw.Window) {
 	swY := rlRS.OriginY + rlRS.Height + 10
 	ggCtx.DrawRectangle(20, float64(swY), toolBoxW, toolBoxH)
 	ggCtx.Fill()
-	swRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: swY}
+	swRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: swY}
 	objCoords[SaveWidget] = swRS
 
 	ggCtx.SetHexColor("#444")
@@ -167,7 +167,7 @@ func allDraws(window *glfw.Window) {
 	ooY := swRS.OriginY + swRS.Height + 10
 	ggCtx.DrawRectangle(20, float64(ooY), toolBoxW, toolBoxH)
 	ggCtx.Fill()
-	ooRS := g143.RectSpecs{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: ooY}
+	ooRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: ooY}
 	objCoords[OpenWDWidget] = ooRS
 
 	ggCtx.SetHexColor("#444")
@@ -178,7 +178,7 @@ func allDraws(window *glfw.Window) {
 	ggCtx.DrawRectangle(200, 10, 1200, 600)
 	ggCtx.Fill()
 
-	canvasRS := g143.RectSpecs{Width: 1200, Height: 600, OriginX: 200, OriginY: 10}
+	canvasRS := g143.Rect{Width: 1200, Height: 600, OriginX: 200, OriginY: 10}
 	objCoords[CanvasWidget] = canvasRS
 
 	// draw divider
@@ -195,7 +195,7 @@ func allDraws(window *glfw.Window) {
 	ggCtx.DrawString("Side View", toolBoxW+300+canvasWidth/2, float64(indicatorsY)+fontSize)
 
 	// send the frame to glfw window
-	windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
+	windowRS := g143.Rect{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
 	g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
 	window.SwapBuffers()
 
@@ -214,11 +214,11 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 
 	wWidth, wHeight := window.GetSize()
 
-	var widgetRS g143.RectSpecs
+	var widgetRS g143.Rect
 	var widgetCode int
 
 	for code, RS := range objCoords {
-		if g143.InRectSpecs(RS, xPosInt, yPosInt) {
+		if g143.InRect(RS, xPosInt, yPosInt) {
 			widgetRS = RS
 			widgetCode = code
 			break
@@ -250,7 +250,7 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		drawnIndicators = append(drawnIndicators, CircleSpec{X: widgetRS.OriginX + widgetRS.Width - 20, Y: widgetRS.OriginY + 20})
 
 		// send the frame to glfw window
-		windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
+		windowRS := g143.Rect{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
 		g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
 		window.SwapBuffers()
 
@@ -273,7 +273,7 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		imaging.Save(pencilLayerImg, outPath)
 
 		// send the frame to glfw window
-		windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
+		windowRS := g143.Rect{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
 		g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
 		window.SwapBuffers()
 
@@ -346,7 +346,7 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		ggCtx.Stroke()
 
 		// send the frame to glfw window
-		windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
+		windowRS := g143.Rect{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
 		g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
 		window.SwapBuffers()
 
@@ -401,7 +401,7 @@ func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.
 		}
 
 		// send the frame to glfw window
-		windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
+		windowRS := g143.Rect{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
 		g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
 		window.SwapBuffers()
 
@@ -446,7 +446,7 @@ func cursorPosCallback(window *glfw.Window, xpos float64, ypos float64) {
 
 	ctrlState := window.GetKey(glfw.KeyLeftControl)
 
-	if g143.InRectSpecs(canvasRS, int(xpos), int(ypos)) && currentMouseAction == glfw.Press {
+	if g143.InRect(canvasRS, int(xpos), int(ypos)) && currentMouseAction == glfw.Press {
 
 		// Pencil Widget
 		translastedMouseX, translatedMouseY := xpos-float64(canvasRS.OriginX), ypos-float64(canvasRS.OriginY)
@@ -483,7 +483,7 @@ func cursorPosCallback(window *glfw.Window, xpos float64, ypos float64) {
 	}
 
 	// send the frame to glfw window
-	windowRS := g143.RectSpecs{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
+	windowRS := g143.Rect{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
 	g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
 	window.SwapBuffers()
 
