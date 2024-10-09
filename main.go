@@ -67,7 +67,7 @@ func main() {
 	drawnIndicators = make([]CircleSpec, 0)
 
 	window := g143.NewWindow(1450, 700, "images376: a 3d reference image creator. Majoring on faces", false)
-	allDraws(window)
+	drawMainWindow(window)
 
 	// respond to the mouse
 	window.SetMouseButtonCallback(mouseBtnCallback)
@@ -83,124 +83,61 @@ func main() {
 
 }
 
-func allDraws(window *glfw.Window) {
+func drawMainWindow(window *glfw.Window) {
 	wWidth, wHeight := window.GetSize()
 
-	// frame buffer
-	ggCtx := gg.NewContext(wWidth, wHeight)
+	theCtx := New2dCtx(wWidth, wHeight)
 
 	// background rectangle
-	ggCtx.DrawRectangle(0, 0, float64(wWidth), float64(wHeight))
-	ggCtx.SetHexColor("#ddd")
-	ggCtx.Fill()
-
-	// intro text
-	FontPath := getDefaultFontPath()
-	// draw the tools
-	err := ggCtx.LoadFontFace(FontPath, fontSize)
-	if err != nil {
-		panic(err)
-	}
+	theCtx.ggCtx.DrawRectangle(0, 0, float64(wWidth), float64(wHeight))
+	theCtx.ggCtx.SetHexColor("#ddd")
+	theCtx.ggCtx.Fill()
 
 	// draw tools box
-	ggCtx.SetHexColor("#DAC166")
-	ggCtx.DrawRoundedRectangle(10, 10, toolBoxW+20, 320, 10)
-	ggCtx.Fill()
+	theCtx.ggCtx.SetHexColor("#DAC166")
+	theCtx.ggCtx.DrawRoundedRectangle(10, 10, toolBoxW+20, 320, 10)
+	theCtx.ggCtx.Fill()
 
-	// pencil tool
-	ggCtx.SetHexColor("#dddddd")
-	ggCtx.DrawRectangle(20, 20, toolBoxW, toolBoxH)
-	ggCtx.Fill()
-
-	pencilRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: 20}
-	objCoords[PencilWidget] = pencilRS
-
-	ggCtx.SetHexColor("#444444")
-	ggCtx.DrawString("Pencil", 30, 30+fontSize)
-
-	// symm line tool
-	ggCtx.SetHexColor("#dddddd")
-	ggCtx.DrawRectangle(20, 70, toolBoxW, toolBoxH)
-	ggCtx.Fill()
-
-	slRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: 70}
-	objCoords[SymmLineWidget] = slRS
-
-	ggCtx.SetHexColor("#444444")
-	ggCtx.DrawString("Symm Line", 30, 80+fontSize)
-
-	// Left symm tool
-	ggCtx.SetHexColor("#dddddd")
-	lswY := slRS.OriginY + slRS.Height + 10
-	ggCtx.DrawRectangle(20, float64(lswY), toolBoxW, toolBoxH)
-	ggCtx.Fill()
-	lsRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: lswY}
-	objCoords[LeftSymmWidget] = lsRS
-
-	ggCtx.SetHexColor("#444444")
-	ggCtx.DrawString("Left Symm", 30, float64(lsRS.OriginY)+fontSize+10)
-
-	// Refline tool
-	ggCtx.SetHexColor("#ddd")
-	rlwY := lsRS.OriginY + lsRS.Height + 10
-	ggCtx.DrawRectangle(20, float64(rlwY), toolBoxW, toolBoxH)
-	ggCtx.Fill()
-	rlRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: rlwY}
-	objCoords[RefLineWidget] = rlRS
-
-	ggCtx.SetHexColor("#444")
-	ggCtx.DrawString("Ref Line", 30, float64(rlRS.OriginY)+fontSize+10)
-
-	// save tool
-	ggCtx.SetHexColor("#ddd")
-	swY := rlRS.OriginY + rlRS.Height + 10
-	ggCtx.DrawRectangle(20, float64(swY), toolBoxW, toolBoxH)
-	ggCtx.Fill()
-	swRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: swY}
-	objCoords[SaveWidget] = swRS
-
-	ggCtx.SetHexColor("#444")
-	ggCtx.DrawString("Save Ref", 30, float64(swRS.OriginY)+fontSize+10)
-
-	// Open Outputs
-	ggCtx.SetHexColor("#ddd")
-	ooY := swRS.OriginY + swRS.Height + 10
-	ggCtx.DrawRectangle(20, float64(ooY), toolBoxW, toolBoxH)
-	ggCtx.Fill()
-	ooRS := g143.Rect{Width: toolBoxW, Height: toolBoxH, OriginX: 20, OriginY: ooY}
-	objCoords[OpenWDWidget] = ooRS
-
-	ggCtx.SetHexColor("#444")
-	ggCtx.DrawString("Open Folder", 30, float64(ooRS.OriginY)+fontSize+10)
+	// draw tools
+	pnRect := theCtx.drawButtonA(PencilWidget, 20, 20, "Pencil", "#444", "#ddd")
+	_, sTY := nextVerticalCoords(pnRect, 10)
+	sTRect := theCtx.drawButtonA(SymmLineWidget, 20, sTY, "Symm Line", "#444", "#ddd")
+	_, lSTY := nextVerticalCoords(sTRect, 10)
+	lSTRect := theCtx.drawButtonA(LeftSymmWidget, 20, lSTY, "Left Symm", "#444", "#ddd")
+	_, rFTY := nextVerticalCoords(lSTRect, 10)
+	rFTRect := theCtx.drawButtonA(RefLineWidget, 20, rFTY, "Ref Line", "#444", "#ddd")
+	_, sRTY := nextVerticalCoords(rFTRect, 10)
+	sRRect := theCtx.drawButtonA(SaveWidget, 20, sRTY, "Save Ref", "#444", "#ddd")
+	_, oWDY := nextVerticalCoords(sRRect, 10)
+	theCtx.drawButtonA(OpenWDWidget, 20, oWDY, "Open Folder", "#444", "#ddd")
 
 	// Canvas
-	ggCtx.SetHexColor("#ffffff")
-	ggCtx.DrawRectangle(200, 10, 1200, 600)
-	ggCtx.Fill()
+	theCtx.ggCtx.SetHexColor("#ffffff")
+	theCtx.ggCtx.DrawRectangle(200, 10, 1200, 600)
+	theCtx.ggCtx.Fill()
 
 	canvasRS := g143.Rect{Width: 1200, Height: 600, OriginX: 200, OriginY: 10}
 	objCoords[CanvasWidget] = canvasRS
 
 	// draw divider
-	ggCtx.SetHexColor("#444")
-	ggCtx.SetLineWidth(2)
-	ggCtx.MoveTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY))
-	ggCtx.LineTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY)+float64(canvasRS.Height))
-	ggCtx.Stroke()
+	theCtx.ggCtx.SetHexColor("#444")
+	theCtx.ggCtx.SetLineWidth(2)
+	theCtx.ggCtx.MoveTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY))
+	theCtx.ggCtx.LineTo(float64(canvasRS.OriginX)+float64(canvasRS.Width)/2, float64(canvasRS.OriginY)+float64(canvasRS.Height))
+	theCtx.ggCtx.Stroke()
 
 	// write indicators
-	ggCtx.SetHexColor("#444")
+	theCtx.ggCtx.SetHexColor("#444")
 	indicatorsY := canvasRS.OriginY + canvasRS.Height + 20
-	ggCtx.DrawString("Front View", toolBoxW+300, float64(indicatorsY)+fontSize)
-	ggCtx.DrawString("Side View", toolBoxW+300+canvasWidth/2, float64(indicatorsY)+fontSize)
+	theCtx.ggCtx.DrawString("Front View", toolBoxW+300, float64(indicatorsY)+fontSize)
+	theCtx.ggCtx.DrawString("Side View", toolBoxW+300+canvasWidth/2, float64(indicatorsY)+fontSize)
 
 	// send the frame to glfw window
-	windowRS := g143.Rect{Width: wWidth, Height: wHeight, OriginX: 0, OriginY: 0}
-	g143.DrawImage(wWidth, wHeight, ggCtx.Image(), windowRS)
+	g143.DrawImage(wWidth, wHeight, theCtx.ggCtx.Image(), theCtx.windowRect())
 	window.SwapBuffers()
 
 	// save the frame
-	currentWindowFrame = ggCtx.Image()
+	currentWindowFrame = theCtx.ggCtx.Image()
 }
 
 func mouseBtnCallback(window *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
